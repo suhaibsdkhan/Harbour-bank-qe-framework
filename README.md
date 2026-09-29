@@ -7,7 +7,9 @@
 An end-to-end test automation framework for a small banking system, built the way a bank's QE team would build it.
 It includes the system under test, a Spring Boot banking API with a web UI, so every layer can be tested for real:
 REST contracts, business rules, the database, the browser and concurrency. CI runs everything on every push and
-publishes one Allure report.
+publishes one Allure report. Every main-branch run is also sent to the
+**[Secure Test Results Dashboard](https://github.com/suhaibsdkhan/secure-test-dashboard)**, which tracks pass-rate
+trends, flaky tests and slow tests across runs.
 
 **Live reports from the latest `main` build:** [Allure test report](https://suhaibsdkhan.github.io/Harbour-bank-qe-framework/) ·
 [Code coverage](https://suhaibsdkhan.github.io/Harbour-bank-qe-framework/coverage/) · [Gatling load test](https://suhaibsdkhan.github.io/Harbour-bank-qe-framework/performance/) ·
@@ -159,6 +161,11 @@ npm run report && npm run report:open
 5. **report**: merges Allure results from every job, carries over trend history, adds failure categories,
    writes a summary to the job page, and bundles the coverage and Gatling reports.
 6. **deploy**: publishes everything to GitHub Pages from `main`.
+7. **publish-results**: on `main`, merges the Surefire reports into JUnit files with `scripts/merge-junit.mjs`
+   (dropping JVM properties and console output) and uploads them, plus the Newman report, to the
+   [test results dashboard](https://github.com/suhaibsdkhan/secure-test-dashboard) as `harbour-bank-unit`,
+   `harbour-bank-e2e` and `harbour-bank-postman`. Failed runs are uploaded too. It skips until you set a
+   `DASHBOARD_URL` repository variable and a `DASHBOARD_INGEST_TOKEN` secret.
 
 To enable the Pages step on a fork: *Settings → Pages → Build and deployment → Source: GitHub Actions*.
 
