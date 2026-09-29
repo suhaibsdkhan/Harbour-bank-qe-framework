@@ -1,0 +1,23 @@
+[
+  {
+    "name": "Money integrity defects",
+    "description": "Balances, ledger or transfers no longer add up. Treat as a release blocker.",
+    "matchedStatuses": ["failed"],
+    "messageRegex": ".*(reconcile|balance|ledger|double-entry|negative).*"
+  },
+  {
+    "name": "Contract / schema drift",
+    "matchedStatuses": ["failed"],
+    "messageRegex": ".*(schema|JsonSchema|Expected status code).*"
+  },
+  {
+    "name": "UI timing or locator issues",
+    "matchedStatuses": ["broken", "failed"],
+    "traceRegex": ".*(TimeoutException|TimeoutError|NoSuchElementException|StaleElementReferenceException).*"
+  },
+  {
+    "name": "Test infrastructure",
+    "matchedStatuses": ["broken"],
+    "messageRegex": ".*(Connection refused|Query failed|Failed to launch|SessionNotCreated).*"
+  }
+]

@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Harbour Bank · Online Banking</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+    <div class="brand">Harbour Bank <span class="tag">demo</span></div>
+    <nav>
+        <a href="#accounts">Accounts</a>
+        <a href="#move-money">Move money</a>
+    </nav>
+</header>
+
+<main>
+    <div id="alert" class="alert hidden" role="status" data-testid="alert"></div>
+
+    <section class="grid">
+        <form id="open-account-form" class="card" data-testid="open-account-form" novalidate>
+            <h2>Open an account</h2>
+            <label for="owner-name">Owner name</label>
+            <input id="owner-name" name="ownerName" data-testid="owner-name" autocomplete="off" required>
+
+            <label for="account-type">Account type</label>
+            <select id="account-type" name="type" data-testid="account-type">
+                <option value="CHEQUING">Chequing</option>
+                <option value="SAVINGS">Savings</option>
+            </select>
+
+            <label for="initial-deposit">Initial deposit (CAD)</label>
+            <input id="initial-deposit" name="initialDeposit" data-testid="initial-deposit" inputmode="decimal" value="0.00">
+
+            <button type="submit" data-testid="open-account-submit">Open account</button>
+        </form>
+
+        <form id="deposit-form" class="card" data-testid="deposit-form" novalidate>
+            <h2>Deposit</h2>
+            <label for="deposit-account">Account</label>
+            <select id="deposit-account" name="account" data-testid="deposit-account" class="account-select"></select>
+
+            <label for="deposit-amount">Amount (CAD)</label>
+            <input id="deposit-amount" name="amount" data-testid="deposit-amount" inputmode="decimal">
+
+            <button type="submit" data-testid="deposit-submit">Deposit</button>
+        </form>
+
+        <form id="transfer-form" class="card" data-testid="transfer-form" novalidate>
+            <h2 id="move-money">Transfer between accounts</h2>
+            <label for="transfer-from">From</label>
+            <select id="transfer-from" name="fromAccount" data-testid="transfer-from" class="account-select"></select>
+
+            <label for="transfer-to">To</label>
+            <select id="transfer-to" name="toAccount" data-testid="transfer-to" class="account-select"></select>
+
+            <label for="transfer-amount">Amount (CAD)</label>
+            <input id="transfer-amount" name="amount" data-testid="transfer-amount" inputmode="decimal">
+
+            <label for="transfer-description">Memo</label>
+            <input id="transfer-description" name="description" data-testid="transfer-description" maxlength="140">
+
+            <button type="submit" data-testid="transfer-submit">Send transfer</button>
+        </form>
+    </section>
+
+    <section class="card" id="accounts">
+        <div class="section-head">
+            <h2>Accounts</h2>
+            <button type="button" id="refresh" class="secondary" data-testid="refresh-accounts">Refresh</button>
+        </div>
+        <table data-testid="accounts-table">
+            <thead>
+            <tr><th>Account</th><th>Owner</th><th>Type</th><th class="num">Balance</th><th>Status</th></tr>
+            </thead>
+            <tbody id="accounts-body"></tbody>
+        </table>
+        <p id="no-accounts" class="muted" data-testid="no-accounts">No accounts yet. Open one above.</p>
+    </section>
+
+    <section class="card hidden" id="details" data-testid="account-details">
+        <div class="section-head">
+            <h2>Account <span id="details-number" data-testid="details-number"></span></h2>
+            <span class="balance">Balance <strong id="details-balance" data-testid="details-balance"></strong></span>
+        </div>
+        <table data-testid="transactions-table">
+            <thead>
+            <tr><th>Date</th><th>Description</th><th>Type</th><th class="num">Amount</th><th class="num">Balance</th></tr>
+            </thead>
+            <tbody id="transactions-body"></tbody>
+        </table>
+    </section>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
