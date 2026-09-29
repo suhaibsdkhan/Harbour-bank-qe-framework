@@ -1,0 +1,12 @@
+target/
+node_modules/
+allure-results/
+allure-report/
+.allure/history/
+*.log
+
+.idea/
+*.iml
+.vscode/
+.DS_Store
+ajcore.*.txt
