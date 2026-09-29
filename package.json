@@ -1,0 +1,15 @@
+{
+  "name": "banking-qe-framework",
+  "private": true,
+  "description": "Node tooling for the Postman/Newman suite and Allure report generation.",
+  "scripts": {
+    "test:postman": "newman run postman/harbour-bank.postman_collection.json -e postman/local.postman_environment.json -r cli,allure,junit --reporter-allure-resultsDir target/allure-results-newman --reporter-junit-export target/newman/junit.xml",
+    "report": "allure generate allure-results --clean -o allure-report",
+    "report:open": "allure open allure-report"
+  },
+  "devDependencies": {
+    "allure-commandline": "^2.46.1",
+    "newman": "^6.2.2",
+    "newman-reporter-allure": "^3.13.0"
+  }
+}

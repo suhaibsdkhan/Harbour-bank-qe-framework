@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Transfer",
+  "type": "object",
+  "required": ["reference", "fromAccount", "toAccount", "amount", "currency", "status", "createdAt"],
+  "additionalProperties": false,
+  "properties": {
+    "reference": { "type": "string", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$" },
+    "fromAccount": { "type": "string", "pattern": "^[0-9]{10}$" },
+    "toAccount": { "type": "string", "pattern": "^[0-9]{10}$" },
+    "amount": { "type": "number", "minimum": 0.01 },
+    "currency": { "enum": ["CAD"] },
+    "description": { "type": "string", "maxLength": 140 },
+    "status": { "enum": ["COMPLETED", "REJECTED"] },
+    "failureReason": { "type": "string" },
+    "createdAt": { "type": "string", "format": "date-time" }
+  }
+}
