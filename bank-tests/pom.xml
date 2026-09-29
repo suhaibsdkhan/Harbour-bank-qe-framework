@@ -23,12 +23,12 @@
     </properties>
 
     <dependencies>
-        <!-- System under test: only used to boot the app in-process when no -Dbase.url is given. -->
+        <!-- System under test: only used to boot the app in-process when no -Dbase.url is given.
+             Compile scope (not test) so JaCoCo's report-aggregate picks up its classes. -->
         <dependency>
             <groupId>dev.suhaib</groupId>
             <artifactId>bank-app</artifactId>
             <version>${project.version}</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.h2database</groupId>
@@ -102,6 +102,12 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>com.deque.html.axe-core</groupId>
+            <artifactId>playwright</artifactId>
+            <version>${axe-core.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.seleniumhq.selenium</groupId>
             <artifactId>selenium-java</artifactId>
             <scope>test</scope>
@@ -133,7 +139,7 @@
                 <configuration>
                     <testFailureIgnore>false</testFailureIgnore>
                     <argLine>
-                        -Dstdout.encoding=UTF-8 -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar"
+                        @{argLine} -Dstdout.encoding=UTF-8 -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar"
                     </argLine>
                     <systemPropertyVariables>
                         <allure.results.directory>${allure.results.directory}</allure.results.directory>
@@ -153,6 +159,26 @@
                         <version>${aspectj.version}</version>
                     </dependency>
                 </dependencies>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                    <!-- One coverage report for bank-app, merging its unit tests with this module's end-to-end run. -->
+                    <execution>
+                        <id>coverage-report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report-aggregate</goal>
+                        </goals>
+                        <configuration>
+                            <includeCurrentProject>false</includeCurrentProject>
+                            <excludes>
+                                <exclude>dev/suhaib/bank/BankApplication.class</exclude>
+                            </excludes>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

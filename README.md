@@ -9,7 +9,9 @@ It includes the system under test, a Spring Boot banking API with a web UI, so e
 REST contracts, business rules, the database, the browser and concurrency. CI runs everything on every push and
 publishes one Allure report.
 
-**[Open the latest Allure report →](https://suhaibsdkhan.github.io/Harbour-bank-qe-framework/)**
+**Live reports from the latest `main` build:** [Allure test report](https://suhaibsdkhan.github.io/Harbour-bank-qe-framework/) ·
+[Code coverage](https://suhaibsdkhan.github.io/Harbour-bank-qe-framework/coverage/) · [Gatling load test](https://suhaibsdkhan.github.io/Harbour-bank-qe-framework/performance/) ·
+[Test strategy](docs/TEST_STRATEGY.md)
 
 | | |
 |---|---|
@@ -19,16 +21,25 @@ publishes one Allure report.
 
 | Layer | Tooling | What is tested |
 |---|---|---|
+| Unit | **JUnit 5**, **Mockito**, `@WebMvcTest` | Transfer rules, lock ordering and HTTP error mapping in isolation |
 | API | **Rest Assured**, **JUnit 5**, JSON Schema | Contracts, status codes, RFC 7807 error bodies, boundary values, idempotency |
 | BDD | **Cucumber** (Gherkin, PicoContainer) | Business-readable scenarios for accounts, transfers and online banking |
-| UI | **Playwright** and **Selenium WebDriver** | The same web app driven by both tools through page objects |
+| UI | **Playwright** and **Selenium WebDriver** | The same web app driven by both tools through page objects; Selenium runs on Chrome and Firefox |
+| Accessibility | **axe-core** (Playwright) | WCAG 2.1 AA scan of the page, including success and error states |
 | Data | **SQL over JDBC** | Double-entry ledger, reconciliation, audit rows, running balances |
 | Contract | **Postman** collection run by **Newman** | A second, tool-independent regression pack for the API |
 | Concurrency | JUnit + thread pool | No overdraft under parallel withdrawals, no deadlock on opposite transfers |
+| Performance | **Gatling** | Load test with SLA assertions (p95 < 500 ms, < 1% errors), balance checked under load, ledger reconciled afterwards |
+| Coverage | **JaCoCo** | Unit + end-to-end coverage of the app, merged; CI fails below 90% lines / 85% branches |
 | Reporting | **Allure** | One report merging JUnit, Cucumber and Newman, with HTTP logs, SQL, screenshots and Playwright traces |
-| CI | **GitHub Actions** | Postgres service container, parallel jobs, nightly run, report published to GitHub Pages |
+| Environments | **Docker**, **Docker Compose** | App and Postgres run in containers for the load test, like a shared QA environment |
+| CI | **GitHub Actions** | Five parallel jobs, Postgres service container, nightly run, reports published to GitHub Pages |
 
-About 85 automated checks run in a few minutes.
+About 100 automated checks and a load test run in parallel on every push. Current bank-app coverage is
+about 99% of lines and 92% of branches.
+
+See [docs/TEST_STRATEGY.md](docs/TEST_STRATEGY.md) for the risk ranking, test pyramid, design techniques
+and requirement-to-test traceability.
 
 ## The system under test: Harbour Bank
 
@@ -57,12 +68,17 @@ Banking rules the tests pin down:
 ## Framework design
 
 ```
+bank-app/        Spring Boot app, plus its unit and web-slice tests
+bank-perf/       Gatling load simulation (TransferLoadSimulation)
+bank-tests/      End-to-end framework:
+
 bank-tests/src/test/java/dev/suhaib/qe
 ├── config/       TestConfig: one place for every setting (system property or env var)
 ├── support/      AppLauncher: boots the bank in-process unless -Dbase.url points at an environment
 ├── api/          BankApi client (Rest Assured + Allure logging) and API/concurrency tests
 ├── db/           BankDb (JDBC, SQL attached to the report) and data-integrity tests
-├── ui/playwright PlaywrightExtension (browser per JVM, context per test, trace on failure), page object, tests
+├── ui/playwright PlaywrightExtension (browser per JVM, context per test, trace on failure), page object,
+│                 journeys and axe-core accessibility scans
 ├── ui/selenium   DriverFactory, SeleniumExtension (screenshot + page source on failure), page object, tests
 ├── bdd/          Cucumber runner, ScenarioContext (DI), step definitions
 └── data/         Unique test data per test; no shared fixtures, no test order dependencies
@@ -93,7 +109,8 @@ Requirements: Java 21. Node 20+ only for the Postman suite and the report.
 ./mvnw verify -pl bank-tests -Dgroups=api       # only API tests (JUnit and Cucumber @api)
 ./mvnw verify -pl bank-tests -Dgroups=ui -Dheadless=false        # watch the browsers
 ./mvnw verify -pl bank-tests -Dgroups=smoke     # the Cucumber @smoke scenarios
-./mvnw verify -pl bank-tests -Dselenium.browser=firefox
+./mvnw verify -pl bank-tests -Dgroups=selenium -Dselenium.browser=firefox
+./mvnw verify -pl bank-tests -Dgroups=a11y       # accessibility scans only
 ```
 
 Against Postgres or a deployed environment:
@@ -104,6 +121,15 @@ Against Postgres or a deployed environment:
   -Ddb.url=jdbc:postgresql://localhost:5432/bank -Ddb.user=bank -Ddb.password=bank
 
 ./mvnw verify -pl bank-tests -Dbase.url=https://qa.example.com -Ddb.url=...   # no local app is started
+```
+
+Run the app in Docker with Postgres, then load-test it and check the ledger afterwards:
+
+```bash
+./mvnw install -DskipTests && docker compose up -d --build --wait
+./mvnw -pl bank-perf gatling:test -Dusers=20 -DdurationSeconds=60     # report in bank-perf/target/gatling
+./mvnw verify -pl bank-tests -Dgroups=db -Dbase.url=http://localhost:8080 \
+  -Ddb.url=jdbc:postgresql://localhost:5432/bank -Ddb.user=bank -Ddb.password=bank
 ```
 
 Run the app and the Postman collection:
@@ -124,16 +150,20 @@ npm run report && npm run report:open
 
 `.github/workflows/ci.yml` runs on every push, every pull request and nightly:
 
-1. **java-tests**: builds the app, starts a Postgres 16 service container, installs Playwright Chromium and runs
-   JUnit and Cucumber (API, SQL, Playwright, Selenium against the runner's Chrome).
-2. **postman**: starts the packaged app and runs the Postman collection with Newman.
-3. **report**: merges the Allure results from both jobs, carries over trend history from the previous run, adds
-   failure categories and environment info, and writes a pass/fail table to the job summary.
-4. **deploy**: publishes the report to GitHub Pages from `main`.
+1. **java-tests**: unit tests, then JUnit and Cucumber (API, SQL, Playwright, Selenium on Chrome, axe-core)
+   against a Postgres 16 service container. It merges JaCoCo coverage and enforces the coverage gate.
+2. **selenium-firefox**: the Selenium suite again in Firefox.
+3. **postman**: starts the packaged app and runs the Postman collection with Newman.
+4. **performance**: starts the app and Postgres with Docker Compose, runs the Gatling simulation (SLA
+   assertions fail the job), then runs the SQL reconciliation against the database the load just hit.
+5. **report**: merges Allure results from every job, carries over trend history, adds failure categories,
+   writes a summary to the job page, and bundles the coverage and Gatling reports.
+6. **deploy**: publishes everything to GitHub Pages from `main`.
 
 To enable the Pages step on a fork: *Settings → Pages → Build and deployment → Source: GitHub Actions*.
 
 ## Tech stack
 
-Java 21 · Maven · Spring Boot 3.5 · JUnit 5 · Cucumber 7 · Rest Assured 5 · Playwright 1.56 · Selenium 4 ·
-PostgreSQL 16 / H2 · Postman + Newman · Allure 2 · GitHub Actions
+Java 21 · Maven · Spring Boot 3.5 · JUnit 5 · Mockito · Cucumber 7 · Rest Assured 5 · Playwright 1.56 ·
+Selenium 4 · axe-core · Gatling · JaCoCo · PostgreSQL 16 / H2 · Docker Compose · Postman + Newman · Allure 2 ·
+GitHub Actions

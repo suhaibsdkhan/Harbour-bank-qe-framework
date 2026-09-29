@@ -1,0 +1,27 @@
+# Runs the bank the way a shared QA environment would: the app in a container, backed by Postgres.
+#   ./mvnw -pl bank-app package -DskipTests && docker compose up -d --build
+#   ./mvnw verify -pl bank-tests -Dbase.url=http://localhost:8080 \
+#       -Ddb.url=jdbc:postgresql://localhost:5432/bank -Ddb.user=bank -Ddb.password=bank
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: bank
+      POSTGRES_USER: bank
+      POSTGRES_PASSWORD: bank
+    ports: ["5432:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bank"]
+      interval: 5s
+      retries: 10
+
+  app:
+    build: .
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/bank
+      DB_USER: bank
+      DB_PASSWORD: bank
+    ports: ["8080:8080"]
+    depends_on:
+      db:
+        condition: service_healthy

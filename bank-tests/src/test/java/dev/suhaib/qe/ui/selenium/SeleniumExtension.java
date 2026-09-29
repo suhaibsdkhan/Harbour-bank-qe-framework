@@ -1,5 +1,6 @@
 package dev.suhaib.qe.ui.selenium;
 
+import dev.suhaib.qe.config.TestConfig;
 import io.qameta.allure.Allure;
 import java.io.ByteArrayInputStream;
 import org.junit.jupiter.api.extension.AfterEachCallback;
@@ -18,6 +19,8 @@ public class SeleniumExtension implements BeforeEachCallback, AfterEachCallback,
 
     @Override
     public void beforeEach(ExtensionContext ctx) {
+        // Recorded as a parameter so Chrome and Firefox runs of the same test show up as separate results in Allure.
+        Allure.parameter("browser", TestConfig.seleniumBrowser());
         ctx.getStore(NS).put(WebDriver.class, DriverFactory.create());
     }
 
