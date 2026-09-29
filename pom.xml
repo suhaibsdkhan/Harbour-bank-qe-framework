@@ -21,6 +21,7 @@
     <modules>
         <module>bank-app</module>
         <module>bank-tests</module>
+        <module>bank-perf</module>
     </modules>
 
     <properties>
@@ -35,6 +36,10 @@
         <playwright.version>1.56.0</playwright.version>
         <rest-assured.version>5.5.7</rest-assured.version>
         <selenium.version>4.38.0</selenium.version>
+        <axe-core.version>4.13.0</axe-core.version>
+        <gatling.version>3.16.0</gatling.version>
+        <gatling-maven-plugin.version>4.21.12</gatling-maven-plugin.version>
+        <jacoco.version>0.8.15</jacoco.version>
     </properties>
 
     <dependencyManagement>
@@ -55,4 +60,28 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <build>
+        <plugins>
+            <!-- Records which bank-app code is exercised, by unit tests (bank-app) and end-to-end tests (bank-tests). -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                        <configuration>
+                            <includes>
+                                <include>dev.suhaib.bank.*</include>
+                            </includes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

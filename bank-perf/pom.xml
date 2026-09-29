@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>dev.suhaib</groupId>
+        <artifactId>banking-qe-framework</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>bank-perf</artifactId>
+    <name>Bank Performance Tests</name>
+    <description>Gatling load test with SLA assertions for the transfer API. Runs against a live app via -DbaseUrl.</description>
+
+    <properties>
+        <baseUrl>http://localhost:8080</baseUrl>
+        <!-- Scale knobs, e.g. -Dusers=50 -DdurationSeconds=120 -->
+        <users>20</users>
+        <durationSeconds>60</durationSeconds>
+        <!-- Gatling needs Netty 4.2; the Spring Boot parent would otherwise pin 4.1. -->
+        <netty.version>4.2.18.Final</netty.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.gatling.highcharts</groupId>
+            <artifactId>gatling-charts-highcharts</artifactId>
+            <version>${gatling.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Not part of the normal test phase; run explicitly with: mvn -pl bank-perf gatling:test -->
+            <plugin>
+                <groupId>io.gatling</groupId>
+                <artifactId>gatling-maven-plugin</artifactId>
+                <version>${gatling-maven-plugin.version}</version>
+                <configuration>
+                    <simulationClass>dev.suhaib.perf.TransferLoadSimulation</simulationClass>
+                    <jvmArgs>
+                        <jvmArg>-DbaseUrl=${baseUrl}</jvmArg>
+                        <jvmArg>-Dusers=${users}</jvmArg>
+                        <jvmArg>-DdurationSeconds=${durationSeconds}</jvmArg>
+                    </jvmArgs>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
