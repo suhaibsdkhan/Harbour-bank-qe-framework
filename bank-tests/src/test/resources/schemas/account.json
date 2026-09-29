@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Account",
+  "type": "object",
+  "required": ["accountNumber", "ownerName", "type", "currency", "balance", "status", "createdAt"],
+  "additionalProperties": false,
+  "properties": {
+    "accountNumber": { "type": "string", "pattern": "^[0-9]{10}$" },
+    "ownerName": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "type": { "enum": ["CHEQUING", "SAVINGS"] },
+    "currency": { "enum": ["CAD"] },
+    "balance": { "type": "number", "minimum": 0 },
+    "status": { "enum": ["ACTIVE", "FROZEN"] },
+    "createdAt": { "type": "string", "format": "date-time" }
+  }
+}
