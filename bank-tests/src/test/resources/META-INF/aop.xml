@@ -1,0 +1,7 @@
+<!-- Limit Allure's @Step load-time weaving to the framework's own classes (keeps startup fast and quiet). -->
+<aspectj>
+    <weaver options="-warn:none -Xlint:ignore">
+        <include within="dev.suhaib.qe..*"/>
+        <include within="io.qameta.allure.aspects..*"/>
+    </weaver>
+</aspectj>
