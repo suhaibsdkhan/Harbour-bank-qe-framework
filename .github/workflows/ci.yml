@@ -115,6 +115,14 @@ jobs:
             bank-tests/target/surefire-reports
           if-no-files-found: ignore
 
+      - name: Upload unit test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-reports
+          path: bank-app/target/surefire-reports
+          if-no-files-found: ignore
+
   postman:
     name: Postman collection (Newman)
     runs-on: ubuntu-latest
@@ -149,6 +157,14 @@ jobs:
         with:
           name: allure-results-newman
           path: target/allure-results-newman
+          if-no-files-found: ignore
+
+      - name: Upload Newman JUnit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-junit
+          path: target/newman/junit.xml
           if-no-files-found: ignore
 
       - name: Upload app log
@@ -239,6 +255,63 @@ jobs:
         with:
           name: performance-app-log
           path: app.log
+
+  publish-results:
+    name: Publish results to the test dashboard
+    # Sends every main-branch run, failures included, to the Secure Test Results Dashboard
+    # (github.com/suhaibsdkhan/secure-test-dashboard). Skipped until the DASHBOARD_URL
+    # variable and DASHBOARD_INGEST_TOKEN secret are set.
+    needs: [java-tests, postman]
+    if: always() && vars.DASHBOARD_URL != '' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # A suite may have died before uploading its report; publish whatever exists.
+      - name: Download unit test reports
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: unit-test-reports
+          path: reports/unit
+
+      - name: Download Surefire reports
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: java-test-reports
+          path: reports/e2e
+
+      - name: Download Newman report
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: newman-junit
+          path: reports/newman
+
+      - name: Upload to the dashboard
+        env:
+          DASHBOARD_URL: ${{ vars.DASHBOARD_URL }}
+          TOKEN: ${{ secrets.DASHBOARD_INGEST_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "::warning::DASHBOARD_INGEST_TOKEN is not set; skipping upload"
+            exit 0
+          fi
+          publish() {
+            [ -s "$2" ] || { echo "No $1 results to publish"; return; }
+            curl -fsS --retry 3 -X POST \
+              "$DASHBOARD_URL/api/runs?project=$1&branch=$GITHUB_REF_NAME&commit=$GITHUB_SHA" \
+              -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/xml" \
+              --data-binary "@$2" \
+              || echo "::warning::Could not publish $1 results to the dashboard"
+            echo
+          }
+          node scripts/merge-junit.mjs reports/unit > unit.xml || true
+          node scripts/merge-junit.mjs reports/e2e/surefire-reports > e2e.xml || true
+          publish harbour-bank-unit unit.xml
+          publish harbour-bank-e2e e2e.xml
+          publish harbour-bank-postman reports/newman/junit.xml
 
   report:
     name: Allure report
