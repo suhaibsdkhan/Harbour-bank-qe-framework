@@ -10,3 +10,5 @@ allure-report/
 .vscode/
 .DS_Store
 ajcore.*.txt
+perf-report/
+gatling.log
