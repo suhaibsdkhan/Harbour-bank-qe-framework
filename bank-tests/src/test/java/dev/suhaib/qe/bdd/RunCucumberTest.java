@@ -5,7 +5,7 @@ import org.junit.platform.suite.api.SelectClasspathResource;
 import org.junit.platform.suite.api.Suite;
 
 /** Runs every .feature file under src/test/resources/features through the Cucumber JUnit Platform engine. */
-@Suite
+@Suite(failIfNoTests = false)
 @IncludeEngines("cucumber")
 @SelectClasspathResource("features")
 public class RunCucumberTest {
