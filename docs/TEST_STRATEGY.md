@@ -1,7 +1,6 @@
 # Test Strategy: Harbour Bank
 
-This is the test strategy behind the framework, written the way a QE lead would write it for a real payments
-feature. It explains what is tested, why at each layer, and what has to be true before a release.
+What the framework tests, at which layer and why, and what has to be true before a change can merge.
 
 ## 1. Scope
 

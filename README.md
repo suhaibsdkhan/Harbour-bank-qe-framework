@@ -4,7 +4,7 @@
 [![Allure report](https://img.shields.io/badge/Allure-live%20report-orange)](https://suhaibsdkhan.github.io/Harbour-bank-qe-framework/)
 ![Java 21](https://img.shields.io/badge/Java-21-blue)
 
-An end-to-end test automation framework for a small banking system, built the way a bank's QE team would build it.
+An end-to-end test automation framework for a small banking system.
 It includes the system under test, a Spring Boot banking API with a web UI, so every layer can be tested for real:
 REST contracts, business rules, the database, the browser and concurrency. CI runs everything on every push and
 publishes one Allure report. Every main-branch run is also sent to the
@@ -35,7 +35,7 @@ trends, flaky tests and slow tests across runs.
 | Coverage | **JaCoCo** | Unit + end-to-end coverage of the app, merged; CI fails below 90% lines / 85% branches |
 | Reporting | **Allure** | One report merging JUnit, Cucumber and Newman, with HTTP logs, SQL, screenshots and Playwright traces |
 | Environments | **Docker**, **Docker Compose** | App and Postgres run in containers for the load test, like a shared QA environment |
-| CI | **GitHub Actions** | Five parallel jobs, Postgres service container, nightly run, reports published to GitHub Pages |
+| CI | **GitHub Actions** | Four test jobs in parallel, Postgres service container, nightly run, reports published to GitHub Pages |
 
 About 100 automated checks and a load test run in parallel on every push. Current bank-app coverage is
 about 99% of lines and 92% of branches.
@@ -86,7 +86,7 @@ bank-tests/src/test/java/dev/suhaib/qe
 └── data/         Unique test data per test; no shared fixtures, no test order dependencies
 ```
 
-Choices worth calling out:
+Design decisions:
 
 - **Environment-agnostic.** By default the tests boot the app on a random port with an in-memory database, so
   `mvn verify` works on a fresh clone. Pass `-Dbase.url` and `-Ddb.url` to run the same suite against a deployed
