@@ -22,7 +22,10 @@ env:
 jobs:
   java-tests:
     name: JUnit + Cucumber (API, SQL, Playwright, Selenium)
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest now resolves to 26.04, which Playwright 1.56 can't install
+    # Chromium's system dependencies on. Move back to ubuntu-latest after a Playwright
+    # upgrade that lists 26.04 as supported.
+    runs-on: ubuntu-24.04
     services:
       postgres:
         image: postgres:16-alpine
